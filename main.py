@@ -6,8 +6,14 @@ import pandas as pd
 from fastapi.middleware.cors import CORSMiddleware
 import logging
 from datetime import datetime, timedelta
+from fastapi.responses import RedirectResponse
 
 app = FastAPI()
+
+@app.get('/')
+async def root_redirection():
+    return RedirectResponse("/docs")
+
 
 origins = ["*"]  # TODO: change to frontend url
 
@@ -26,20 +32,26 @@ try:
     updated_at: datetime = datetime.strptime(open("updated_at.txt", "r").read(), "%Y-%m-%d %H:%M:%S")
     if updated_at < datetime.now() - timedelta(days=1):
         raise FileNotFoundError
-    user_data: pd.DataFrame = pd.read_csv("user_data.csv", index_col=0)
-    organization_data: pd.DataFrame = pd.read_csv("organization_data.csv")
+    open("user_data.csv", 'r')
+    open("organization_data.csv", 'r')
 except FileNotFoundError:
-    logger.info("data syncing")
     crawl.main()
-    updated_at: datetime = datetime.strptime(open("updated_at.txt", "r").read(), "%Y-%m-%d %H:%M:%S")
-    user_data: pd.DataFrame = pd.read_csv("user_data.csv", index_col=0)
-    organization_data: pd.DataFrame = pd.read_csv("organization_data.csv")
+    # pd.read_csv("user_data.csv", index_col=0)
+    # pd.read_csv("organization_data.csv")
+
+
+async def get_user_dataFrame() -> pd.DataFrame:
+    return pd.read_csv("user_data.csv").fillna('null')
+
+
+async def get_organization_dataFrame() -> pd.DataFrame:
+    return pd.read_csv("organization_data.csv")
 
 
 @app.on_event("startup")
 @repeat_at(cron="0 0 * * *", raise_exceptions=True, logger=logging.getLogger(__name__))
 def sync():
-    global user_data, organization_data, updated_at
+    global updated_at
 
     logger.info("syncing organization_data")
 
@@ -50,13 +62,16 @@ def sync():
 
     os.makedirs("./history", exist_ok=True)
 
-    user_data.to_csv(f'./history/user_data_{(datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")}.csv', index=False)
-    organization_data.to_csv(f'./history/organization_data_{(datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")}.csv',
-                             index=False)
+    user_data.to_csv(f'./history/user_data_{(datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")}.csv',
+                     index=False)
+    organization_data.to_csv(
+        f'./history/organization_data_{(datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")}.csv',
+        index=False)
 
 
 @app.get("/organization")
 async def get_organization_data() -> dict[str, dict]:
+    organization_data = await get_organization_dataFrame()
     return {"organization_data": organization_data.to_dict(orient="records")[0]}
 
 
@@ -67,4 +82,5 @@ async def get_updated_time() -> datetime:
 
 @app.get("/user")
 async def get_user_data() -> dict[str, list]:
+    user_data = await get_user_dataFrame()
     return {"user_data": user_data.to_dict(orient="records")}
