@@ -164,23 +164,120 @@ def get_user_data(handle_list: list):
 
 
 def main() -> tuple[pd.DataFrame, dict]:
-    updated_at: datetime = datetime.now()
+    while True:
+        try:
+            updated_at: datetime = datetime.now()
 
-    user_data = get_user_data(get_user_handle_list(get_organization_id("하나고등학교")))
-    print(user_data)
+            user_data = get_user_data(get_user_handle_list(get_organization_id("하나고등학교")))
+            print(user_data)
 
-    organization_data = get_organization_info("하나고등학교")
-    print(organization_data)
+            organization_data = get_organization_info("하나고등학교")
+            print(organization_data)
 
-    user_data.to_csv(f'user_data.csv', index=False)  # data.
-    pd.DataFrame(organization_data, index=[0]).to_csv(f'organization_data.csv', index=False)
-    with open('updated_at.txt', 'w') as f:
-        f.write(updated_at.strftime("%Y-%m-%d %H:%M:%S"))
+            user_data.to_csv(f'user_data.csv', index=False)  # data.
+            pd.DataFrame(organization_data, index=[0]).to_csv(f'organization_data.csv', index=False)
+            with open('updated_at.txt', 'w') as f:
+                f.write(updated_at.strftime("%Y-%m-%d %H:%M:%S"))
+        except:
+            pass
+        else:
+            break
 
     return user_data, organization_data
 
 
+def get_user_solved_problem_list(handle: str):
+    url = "https://solved.ac/api/v3/search/problem"
+
+    querystring = {"query": f"s@{handle}", "sort": "id"}
+
+    headers = {"Accept": "application/json"}
+
+    i = 1
+
+    problem_list = []
+
+    while True:
+        querystring["page"] = i
+
+        response = requests.get(url, headers=headers, params=querystring)
+
+        # is empty
+        if not response.json()['items']:
+            break
+
+        problem_list.extend(response.json()['items'])
+
+        i += 1
+
+    return problem_list
+
+
+def get_organization_solved_problems_by_level_and_tag(name: str = "하나고등학교"):
+    level_problems: dict[int, set[int] | list[int]] = {i: set() for i in range(31)}
+
+    tag_data = get_solvedac_tag_dict()
+    tag_problems: dict[int, set[int] | list[int]] = {i: set() for i in range(max(tag_data.keys()) + 1)}
+
+    for handle in get_user_handle_list(get_organization_id(name)):
+        problems = get_user_solved_problem_list(handle)
+
+        for problem in problems:
+            level_problems[problem['level']].add(problem['problemId'])
+
+            for tag in problem['tags']:
+                tag_problems[tag['bojTagId']].add(problem['problemId'])
+
+    level_problems = {key: list(sorted(value)) for key, value in level_problems.items()}
+
+    tag_problems = {key: list(sorted(value)) for key, value in tag_problems.items()}
+
+    for key, value in tag_data.items():
+        new_value = value.copy()
+        new_value['solved_count'] = len(tag_problems[key])
+        tag_data[key] = new_value
+
+    return level_problems, tag_data
+
+
+def get_solvedac_tag_list():
+    url = "https://solved.ac/api/v3/tag/list"
+
+    querystring = {"sort": "problemCount"}
+
+    headers = {"Accept": "application/json"}
+
+    i = 1
+
+    tag_list = []
+
+    while True:
+        querystring["page"] = i
+
+        response = requests.get(url, headers=headers, params=querystring)
+
+        # is empty
+        if not response.json()['items']:
+            break
+
+        tag_list.extend(response.json()['items'])
+
+        i += 1
+
+    return tag_list
+
+
+def get_solvedac_tag_dict():
+    tag_data = {}
+    tags = get_solvedac_tag_list()
+
+    for tag in tags:
+        tag_data[tag['bojTagId']] = {'count': tag['problemCount'],
+                                     'ko'   : tag['displayNames'][0]['name'],
+                                     'en'   : tag['displayNames'][1]['name']}
+
+    return tag_data
+
+
 if __name__ == '__main__':
-    # main()
-    print(get_organization_info("용인한국외국어대학교부설고등학교"))
-    # print(get_user_data(get_user_handle_list(get_organization_id("하나고등학교"))))
+    print(get_organization_solved_problems_by_level_and_tag())
