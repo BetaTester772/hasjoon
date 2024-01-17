@@ -1,3 +1,4 @@
+import os
 from fastapi import FastAPI
 import crawl
 from fastapi_utilities import repeat_at
@@ -47,8 +48,10 @@ def sync():
     user_data = pd.read_csv("user_data.csv", index_col=0)
     organization_data = pd.read_csv("organization_data.csv")
 
-    user_data.to_csv(f'user_data_{(datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")}.csv', index=False)
-    organization_data.to_csv(f'organization_data_{(datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")}.csv',
+    os.makedirs("./history", exist_ok=True)
+
+    user_data.to_csv(f'./history/user_data_{(datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")}.csv', index=False)
+    organization_data.to_csv(f'./history/organization_data_{(datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")}.csv',
                              index=False)
 
 
