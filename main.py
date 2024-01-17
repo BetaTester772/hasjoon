@@ -1,5 +1,3 @@
-from operator import index
-
 from fastapi import FastAPI
 import crawl
 from fastapi_utilities import repeat_at
