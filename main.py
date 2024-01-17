@@ -1,3 +1,5 @@
+from operator import index
+
 from fastapi import FastAPI
 import crawl
 from fastapi_utilities import repeat_at
@@ -18,39 +20,42 @@ app.add_middleware(
         allow_headers=["*"],
 )
 
-# get_logger
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
-updated_at: datetime = datetime.now()
-
-# check if data exists
 try:
+    updated_at: datetime = datetime.strptime(open("updated_at.txt", "r").read(), "%Y-%m-%d %H:%M:%S")
+    if updated_at < datetime.now() - timedelta(days=1):
+        raise FileNotFoundError
     user_data: pd.DataFrame = pd.read_csv("user_data.csv", index_col=0)
-    organization_data: pd.DataFrame = pd.read_csv("organization_data.csv", index_col=0)
-except FileNotFoundError:
+    organization_data: pd.DataFrame = pd.read_csv("organization_data.csv")
+except:
     logger.info("data syncing")
     crawl.main()
+    updated_at: datetime = datetime.strptime(open("updated_at.txt", "r").read(), "%Y-%m-%d %H:%M:%S")
     user_data: pd.DataFrame = pd.read_csv("user_data.csv", index_col=0)
-    organization_data: pd.DataFrame = pd.read_csv("organization_data.csv", index_col=0)
+    organization_data: pd.DataFrame = pd.read_csv("organization_data.csv")
 
 
 @repeat_at(cron="0 0 * * *")
 def sync():
+    global user_data, organization_data, updated_at
+
     logger.info("syncing organization_data")
-    global organization_data
-    organization_data = crawl.get_organization_data()
+
+    crawl.main()
+    updated_at = datetime.strptime(open("updated_at.txt", "r").read(), "%Y-%m-%d %H:%M:%S")
+    user_data = pd.read_csv("user_data.csv", index_col=0)
+    organization_data = pd.read_csv("organization_data.csv")
+
+    user_data.to_csv(f'user_data_{(datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")}.csv', index=False)
     organization_data.to_csv(f'organization_data_{(datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")}.csv',
-                             index=True)
-    logger.info("syncing user_data")
-    global user_data
-    user_data = crawl.main()
-    user_data.to_csv(f'user_data_{(datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")}.csv', index=True)
-    logger.info("syncing done")
+                             index=False)
 
 
 @app.get("/organization")
-async def get_organization_data() -> dict:
-    return organization_data.iloc[0].to_dict()
+async def get_organization_data() -> dict[str, dict]:
+    return {"organization_data": organization_data.to_dict(orient="records")[0]}
 
 
 @app.get("/updated")
@@ -59,6 +64,5 @@ async def get_updated_time() -> datetime:
 
 
 @app.get("/user")
-async def get_user_data() -> dict:
-    user_data_dict = user_data.to_dict()
-    return user_data_dict
+async def get_user_data() -> dict[str, list]:
+    return {"user_data": user_data.to_dict(orient="records")}

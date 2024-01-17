@@ -95,7 +95,19 @@ def get_user_info(handle: str) -> dict | None:
     response = requests.get(url2, headers=headers, params=querystring)
 
     if response.status_code != 200:
-        return None
+        return {
+                'handle'          : handle,
+                'solved_count'    : None,
+                'vote_count'      : None,
+                'class'           : None,
+                'class_decoration': None,
+                'tier'            : None,
+                'rating'          : None,
+                'coins'           : None,
+                'stardusts'       : None,
+                'solved_rank_all' : None,
+                'boj_rank_all'    : rank,
+        }
 
     res_dict = response.json()
     return {
@@ -119,8 +131,7 @@ def get_user_data(handle_list: list):
 
     for i, handle in enumerate(handle_list):
         user_dict = get_user_info(handle)
-        if user_dict is not None:
-            df = pd.concat([df, pd.DataFrame(user_dict, index=[i])])
+        df = pd.concat([df, pd.DataFrame(user_dict, index=[i])])
 
     # add boj rank
     df['boj_rank'] = df.index + 1
@@ -128,23 +139,33 @@ def get_user_data(handle_list: list):
 
     # solved_rank by rank
     df = df.sort_values(by='rating', ascending=False)
-    df = df.reset_index()
-    df['solved_rank'] = df.index + 1
-
+    df = df.reset_index(drop=True)
+    for i in range(len(df)):
+        if df.loc[i, 'rating'] is not None:
+            if i > 0 and df.loc[i, 'rating'] == df.loc[i - 1, 'rating']:
+                df.loc[i, 'solved_rank'] = df.loc[i - 1, 'solved_rank']
+            else:
+                df.loc[i, 'solved_rank'] = i + 1
     return df
 
 
 def main() -> tuple[pd.DataFrame, dict]:
+    updated_at: datetime = datetime.now()
+
     user_data = get_user_data(get_user_handle_list(get_organization_id("하나고등학교")))
     print(user_data)
-    user_data.to_csv(f'user_data.csv', index=True)  # data.
 
     organization_data = get_organization_info("하나고등학교")
-    pd.DataFrame(organization_data, index=[0]).to_csv(f'organization_data.csv', index=True)
     print(organization_data)
+
+    user_data.to_csv(f'user_data.csv', index=False)  # data.
+    pd.DataFrame(organization_data, index=[0]).to_csv(f'organization_data.csv', index=False)
+    with open('updated_at.txt', 'w') as f:
+        f.write(updated_at.strftime("%Y-%m-%d %H:%M:%S"))
 
     return user_data, organization_data
 
 
 if __name__ == '__main__':
     main()
+    # print(get_user_data(get_user_handle_list(get_organization_id("하나고등학교"))))
