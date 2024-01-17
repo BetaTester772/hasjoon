@@ -164,24 +164,42 @@ def get_user_data(handle_list: list):
 
 
 def main() -> tuple[pd.DataFrame, dict]:
-    while True:
-        try:
-            updated_at: datetime = datetime.now()
 
-            user_data = get_user_data(get_user_handle_list(get_organization_id("하나고등학교")))
-            print(user_data)
+    updated_at: datetime = datetime.now()
 
-            organization_data = get_organization_info("하나고등학교")
-            print(organization_data)
+    user_data = get_user_data(get_user_handle_list(get_organization_id("하나고등학교")))
+    # print(user_data)
 
-            user_data.to_csv(f'user_data.csv', index=False)  # data.
-            pd.DataFrame(organization_data, index=[0]).to_csv(f'organization_data.csv', index=False)
-            with open('updated_at.txt', 'w') as f:
-                f.write(updated_at.strftime("%Y-%m-%d %H:%M:%S"))
-        except:
-            pass
-        else:
-            break
+    organization_data = get_organization_info("하나고등학교")
+    # print(organization_data)
+
+    problem_by_level, problem_by_tag = get_organization_solved_problems_by_level_and_tag()
+    # print(problem_by_level)
+    # print(problem_by_tag)
+
+    user_data.to_csv(f'user_data.csv', index=False)
+    pd.DataFrame(organization_data, index=[0]).to_csv(f'organization_data.csv', index=False)
+    level_problem_count = get_solvedac_problem_level_count()
+    df = pd.DataFrame(columns=['level', 'count', 'solved_count'])
+    idx = 0
+    for level, problem_list in problem_by_level.items():
+        df = pd.concat([df, pd.DataFrame(
+                {'level': level, 'count': level_problem_count[level], 'solved_count': len(problem_list)},
+                index=[idx])])
+        idx += 1
+    df.to_csv(f'problem_by_level.csv', index=False)
+
+    df = pd.DataFrame(columns=['tag_id', 'ko', 'en', 'count', 'solved_count'])
+    idx = 0
+    for tag_id, tag_data in problem_by_tag.items():
+        df = pd.concat([df, pd.DataFrame({'tag_id'      : tag_id, 'ko': tag_data['ko'], 'en': tag_data['en'],
+                                          'count'       : tag_data['count'],
+                                          'solved_count': tag_data['solved_count']}, index=[idx])])
+        idx += 1
+    df.to_csv(f'problem_by_tag.csv', index=False)
+    with open('updated_at.txt', 'w') as f:
+        f.write(updated_at.strftime("%Y-%m-%d %H:%M:%S"))
+
 
     return user_data, organization_data
 
@@ -219,7 +237,7 @@ def get_organization_solved_problems_by_level_and_tag(name: str = "하나고등�
     tag_data = get_solvedac_tag_dict()
     tag_problems: dict[int, set[int] | list[int]] = {i: set() for i in range(max(tag_data.keys()) + 1)}
 
-    for handle in get_user_handle_list(get_organization_id(name)):
+    for handle in get_user_handle_list(get_organization_id(name))[:2]:
         problems = get_user_solved_problem_list(handle)
 
         for problem in problems:
@@ -279,5 +297,19 @@ def get_solvedac_tag_dict():
     return tag_data
 
 
+def get_solvedac_problem_level_count():
+    url = "https://solved.ac/api/v3/problem/level"
+
+    headers = {"Accept": "application/json"}
+
+    response = requests.get(url, headers=headers)
+
+    data = {}
+    for i in response.json():
+        data[i['level']] = i['count']
+
+    return data
+
+
 if __name__ == '__main__':
-    print(get_organization_solved_problems_by_level_and_tag())
+    main()

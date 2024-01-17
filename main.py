@@ -10,6 +10,7 @@ from fastapi.responses import RedirectResponse
 
 app = FastAPI()
 
+
 @app.get('/')
 async def root_redirection():
     return RedirectResponse("/docs")
@@ -54,19 +55,33 @@ def sync():
     global updated_at
 
     logger.info("syncing organization_data")
+    while True:
+        try:
+            crawl.main()
+            break
+        except Exception as e:
+            logger.error(e)
+            logger.info("retrying...")
 
-    crawl.main()
     updated_at = datetime.strptime(open("updated_at.txt", "r").read(), "%Y-%m-%d %H:%M:%S")
     user_data = pd.read_csv("user_data.csv", index_col=0)
     organization_data = pd.read_csv("organization_data.csv")
+    problem_by_level = pd.read_csv("problem_by_level.csv")
+    problem_by_tag = pd.read_csv("problem_by_tag.csv")
 
     os.makedirs("./history", exist_ok=True)
 
     user_data.to_csv(f'./history/user_data_{(datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")}.csv',
                      index=False)
     organization_data.to_csv(
-        f'./history/organization_data_{(datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")}.csv',
-        index=False)
+            f'./history/organization_data_{(datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")}.csv',
+            index=False)
+    problem_by_level.to_csv(
+            f'./history/problem_by_level_{(datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")}.csv',
+            index=False)
+    problem_by_tag.to_csv(
+            f'./history/problem_by_tag_{(datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")}.csv',
+            index=False)
 
 
 @app.get("/organization")
