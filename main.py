@@ -6,7 +6,7 @@ from fastapi_utilities import repeat_at
 import pandas as pd
 from fastapi.middleware.cors import CORSMiddleware
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
 
 app = FastAPI()
 
@@ -29,7 +29,7 @@ try:
         raise FileNotFoundError
     user_data: pd.DataFrame = pd.read_csv("user_data.csv", index_col=0)
     organization_data: pd.DataFrame = pd.read_csv("organization_data.csv")
-except:
+except FileNotFoundError:
     logger.info("data syncing")
     crawl.main()
     updated_at: datetime = datetime.strptime(open("updated_at.txt", "r").read(), "%Y-%m-%d %H:%M:%S")

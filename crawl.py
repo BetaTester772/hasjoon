@@ -73,7 +73,21 @@ def get_organization_info(name: str = "하나고등학교") -> dict:
                     "name"        : i["name"],
                     "rating"      : i["rating"],
             }
-            return data
+
+    i = 1
+    while True:
+        querystring = {"page": str(i), "type": "high_school"}
+
+        response = requests.get(url, headers=headers, params=querystring)
+        if response.status_code == 200 and name in response.text:
+            break
+        i += 1
+
+    for i in response.json()['items']:
+        if i['name'] == name:
+            data['rank_high_school'] = i['rank']
+
+    return data
 
 
 def get_user_info(handle: str) -> dict | None:
@@ -167,5 +181,6 @@ def main() -> tuple[pd.DataFrame, dict]:
 
 
 if __name__ == '__main__':
-    main()
+    # main()
+    print(get_organization_info("용인한국외국어대학교부설고등학교"))
     # print(get_user_data(get_user_handle_list(get_organization_id("하나고등학교"))))
