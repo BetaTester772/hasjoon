@@ -99,3 +99,13 @@ async def get_updated_time() -> datetime:
 async def get_user_data() -> dict[str, list]:
     user_data = await get_user_dataFrame()
     return {"user_data": user_data.to_dict(orient="records")}
+
+@app.get("/problem/level")
+async def get_problem_list() -> dict[str, list]:
+    problem_by_level = pd.read_csv("problem_by_level.csv")
+    return {"problem_list": problem_by_level.to_dict(orient="records")}
+
+@app.get("/problem/tag")
+async def get_problem_tag() -> dict[str, list]:
+    problem_by_tag = pd.read_csv("problem_by_tag.csv")
+    return {"problem_tag": problem_by_tag.to_dict(orient="records")}
