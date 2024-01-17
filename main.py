@@ -37,7 +37,8 @@ except FileNotFoundError:
     organization_data: pd.DataFrame = pd.read_csv("organization_data.csv")
 
 
-@repeat_at(cron="0 0 * * *")
+@app.on_event("startup")
+@repeat_at(cron="0 0 * * *", raise_exceptions=True, logger=logging.getLogger(__name__))
 def sync():
     global user_data, organization_data, updated_at
 
