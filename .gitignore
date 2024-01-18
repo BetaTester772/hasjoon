@@ -4,5 +4,5 @@
 /user_data.csv
 /updated_at.txt
 /history/
-/problem_by_level.csv
-/problem_by_tag.csv
+/problem_count_by_level.csv
+/problem_count_by_tag.csv

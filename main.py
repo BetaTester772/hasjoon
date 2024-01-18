@@ -35,9 +35,16 @@ try:
         raise FileNotFoundError
     open("user_data.csv", 'r')
     open("organization_data.csv", 'r')
+    open("problem_count_by_level.csv", 'r')
+    open("problem_count_by_tag.csv", 'r')
 except FileNotFoundError:
-    crawl.main()
-    # pd.read_csv("user_data.csv", index_col=0)
+    while True:
+        try:
+            crawl.main()
+            break
+        except Exception as e:
+            logger.error(e)
+            logger.info("retrying...")    # pd.read_csv("user_data.csv", index_col=0)
     # pd.read_csv("organization_data.csv")
 
 
@@ -66,8 +73,8 @@ def sync():
     updated_at = datetime.strptime(open("updated_at.txt", "r").read(), "%Y-%m-%d %H:%M:%S")
     user_data = pd.read_csv("user_data.csv", index_col=0)
     organization_data = pd.read_csv("organization_data.csv")
-    problem_by_level = pd.read_csv("problem_by_level.csv")
-    problem_by_tag = pd.read_csv("problem_by_tag.csv")
+    problem_by_level = pd.read_csv("problem_count_by_level.csv")
+    problem_by_tag = pd.read_csv("problem_count_by_tag.csv")
 
     os.makedirs("./history", exist_ok=True)
 
@@ -77,10 +84,10 @@ def sync():
             f'./history/organization_data_{(datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")}.csv',
             index=False)
     problem_by_level.to_csv(
-            f'./history/problem_by_level_{(datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")}.csv',
+            f'./history/problem_count_by_level_{(datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")}.csv',
             index=False)
     problem_by_tag.to_csv(
-            f'./history/problem_by_tag_{(datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")}.csv',
+            f'./history/problem_count_by_tag_{(datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")}.csv',
             index=False)
 
 
@@ -102,12 +109,18 @@ async def get_user_data() -> dict[str, list]:
 
 
 @app.get("/problem/level")
-async def get_problem_list() -> dict[str, list]:
-    problem_by_level = pd.read_csv("problem_by_level.csv")
-    return {"problem_list": problem_by_level.to_dict(orient="records")}
+async def get_problem_list(level_id: int = None) -> dict[str, list]:
+    problem_by_level = pd.read_csv("problem_count_by_level.csv")
+    if level_id:
+        return {"problem_list": problem_by_level[problem_by_level['level'] == level_id].to_dict(orient="records")}
+    else:
+        return {"problem_list": problem_by_level.to_dict(orient="records")}
 
 
 @app.get("/problem/tag")
-async def get_problem_tag() -> dict[str, list]:
-    problem_by_tag = pd.read_csv("problem_by_tag.csv")
-    return {"problem_tag": problem_by_tag.to_dict(orient="records")}
+async def get_problem_tag(tag_id: int = None) -> dict[str, list]:
+    problem_by_tag = pd.read_csv("problem_count_by_tag.csv")
+    if tag_id:
+        return {"problem_list": problem_by_tag[problem_by_tag['tag_id'] == tag_id].to_dict(orient="records")}
+    else:
+        return {"problem_tag": problem_by_tag.to_dict(orient="records")}
