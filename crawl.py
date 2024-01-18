@@ -1,3 +1,5 @@
+from typing import Dict
+
 import requests
 import bs4 as bs
 import pandas as pd
@@ -164,7 +166,6 @@ def get_user_data(handle_list: list):
 
 
 def main() -> tuple[pd.DataFrame, dict]:
-
     updated_at: datetime = datetime.now()
 
     user_data = get_user_data(get_user_handle_list(get_organization_id("하나고등학교")))
@@ -187,7 +188,7 @@ def main() -> tuple[pd.DataFrame, dict]:
                 {'level': level, 'count': level_problem_count[level], 'solved_count': len(problem_list)},
                 index=[idx])])
         idx += 1
-    df.to_csv(f'problem_by_level.csv', index=False)
+    df.to_csv(f'problem_count_by_level.csv', index=False)
 
     df = pd.DataFrame(columns=['tag_id', 'ko', 'en', 'count', 'solved_count'])
     idx = 0
@@ -196,10 +197,9 @@ def main() -> tuple[pd.DataFrame, dict]:
                                           'count'       : tag_data['count'],
                                           'solved_count': tag_data['solved_count']}, index=[idx])])
         idx += 1
-    df.to_csv(f'problem_by_tag.csv', index=False)
+    df.to_csv(f'problem_count_by_tag.csv', index=False)
     with open('updated_at.txt', 'w') as f:
         f.write(updated_at.strftime("%Y-%m-%d %H:%M:%S"))
-
 
     return user_data, organization_data
 
@@ -232,30 +232,50 @@ def get_user_solved_problem_list(handle: str):
 
 
 def get_organization_solved_problems_by_level_and_tag(name: str = "하나고등학교"):
-    level_problems: dict[int, set[int] | list[int]] = {i: set() for i in range(31)}
+    level_problems: dict[int, set[int] | list[int]] = {i: [] for i in range(31)}
 
     tag_data = get_solvedac_tag_dict()
-    tag_problems: dict[int, set[int] | list[int]] = {i: set() for i in range(max(tag_data.keys()) + 1)}
+    tag_problems: dict[int, list[int]] = {i: [] for i in range(max(tag_data.keys()) + 1)}
 
-    for handle in get_user_handle_list(get_organization_id(name))[:2]:
+    for handle in get_user_handle_list(get_organization_id(name)):  # Delete when deploy
         problems = get_user_solved_problem_list(handle)
 
         for problem in problems:
-            level_problems[problem['level']].add(problem['problemId'])
+            level_problems[problem['level']].append(problem['problemId'])
 
             for tag in problem['tags']:
-                tag_problems[tag['bojTagId']].add(problem['problemId'])
+                tag_problems[tag['bojTagId']].append(problem['problemId'])
 
-    level_problems = {key: list(sorted(value)) for key, value in level_problems.items()}
+    level_problems = {key: list(sorted(set(value))) for key, value in level_problems.items()}
 
-    tag_problems = {key: list(sorted(value)) for key, value in tag_problems.items()}
+    tag_problems = {key: list(sorted(set(value))) for key, value in tag_problems.items()}
 
     for key, value in tag_data.items():
         new_value = value.copy()
         new_value['solved_count'] = len(tag_problems[key])
         tag_data[key] = new_value
 
-    return level_problems, tag_data
+    return level_problems, tag_data, solved_problems_user
+
+
+def get_solved_problem_info(name="하나고등학교"):
+    solved_problems_user: dict[int, dict[str, int | str]] = {}
+
+    user_data = get_user_data(get_user_handle_list(get_organization_id(name)))
+
+    for handle in user_data
+        problems = get_user_solved_problem_list(handle)
+
+        for problem in problems:
+            print(problem)
+            if solved_problems_user.get(problem['problemId']) is None:
+                solved_problems_user[problem['problemId']] = {"handle": "", "tier": 0, "user_count": 0}
+            if handle['tier'] > solved_problems_user[problem['problemId']]["tier"]:
+                solved_problems_user[problem['problemId']]["handle"] = handle["handle"]
+                solved_problems_user[problem['problemId']]["tier"] = handle["tier"]
+            solved_problems_user[problem['problemId']]['user_count'] += 1
+
+    return solved_problems_user
 
 
 def get_solvedac_tag_list():
@@ -313,3 +333,4 @@ def get_solvedac_problem_level_count():
 
 if __name__ == '__main__':
     main()
+    # print(get_solved_problem_info())
