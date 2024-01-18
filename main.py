@@ -38,6 +38,7 @@ try:
     open("organization_data.csv", 'r')
     open("problem_count_by_level.csv", 'r')
     open("problem_count_by_tag.csv", 'r')
+    open("problem_info.json", 'r')
 except FileNotFoundError:
     crawl.main()
     while True:
