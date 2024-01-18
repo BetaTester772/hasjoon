@@ -38,13 +38,15 @@ try:
     open("problem_count_by_level.csv", 'r')
     open("problem_count_by_tag.csv", 'r')
 except FileNotFoundError:
+    crawl.main()
     while True:
+        break  # TODO: delete(disable retry)
         try:
             crawl.main()
             break
         except Exception as e:
             logger.error(e)
-            logger.info("retrying...")    # pd.read_csv("user_data.csv", index_col=0)
+            logger.info("retrying...")  # pd.read_csv("user_data.csv", index_col=0)
     # pd.read_csv("organization_data.csv")
 
 
