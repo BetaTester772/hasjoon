@@ -255,7 +255,7 @@ def get_organization_solved_problems_by_level_and_tag(name: str = "하나고등�
         new_value['solved_count'] = len(tag_problems[key])
         tag_data[key] = new_value
 
-    return level_problems, tag_data, solved_problems_user
+    return level_problems, tag_data
 
 
 def get_solved_problem_info(name="하나고등학교"):
