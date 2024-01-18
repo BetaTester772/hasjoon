@@ -228,7 +228,7 @@ def get_user_solved_problem_list(handle: str):
         response = requests.get(url, headers=headers, params=querystring)
 
         # is empty
-        if response != 200 or not response.json()['items']:
+        if response.status_code != 200 or not response.json()['items']:
             break
 
         problem_list.extend(response.json()['items'])
