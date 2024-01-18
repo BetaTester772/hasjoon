@@ -100,7 +100,7 @@ def get_user_info(handle: str) -> dict | None:
     rank_element = html.find('th', string='등수')
 
     # 등수 요소에서 등수를 추출합니다.
-    rank = rank_element.find_next('td').text.strip()
+    rank = rank_element .find_next('td').text.strip()
 
     url2 = "https://solved.ac/api/v3/user/show"
 
@@ -178,6 +178,9 @@ def main() -> tuple[pd.DataFrame, dict]:
     # print(problem_by_level)
     # print(problem_by_tag)
 
+    problem_info = get_solved_problem_info()
+    # print(problem_info)
+
     user_data.to_csv(f'user_data.csv', index=False)
     pd.DataFrame(organization_data, index=[0]).to_csv(f'organization_data.csv', index=False)
     level_problem_count = get_solvedac_problem_level_count()
@@ -198,6 +201,10 @@ def main() -> tuple[pd.DataFrame, dict]:
                                           'solved_count': tag_data['solved_count']}, index=[idx])])
         idx += 1
     df.to_csv(f'problem_count_by_tag.csv', index=False)
+
+    with open("problem_info.json", 'w') as f:
+        json.dump(problem_info, f, ensure_ascii=False, indent=4)
+
     with open('updated_at.txt', 'w') as f:
         f.write(updated_at.strftime("%Y-%m-%d %H:%M:%S"))
 
@@ -261,19 +268,21 @@ def get_organization_solved_problems_by_level_and_tag(name: str = "하나고등�
 def get_solved_problem_info(name="하나고등학교"):
     solved_problems_user: dict[int, dict[str, int | str]] = {}
 
-    user_data = get_user_data(get_user_handle_list(get_organization_id(name)))
-
-    for handle in user_data:
+    for handle in get_user_handle_list(get_organization_id(name)):
         problems = get_user_solved_problem_list(handle)
+        user_data = get_user_data([handle]).to_dict(orient="records")[0]
 
         for problem in problems:
-            print(problem)
+            # print(problem)
             if solved_problems_user.get(problem['problemId']) is None:
-                solved_problems_user[problem['problemId']] = {"handle": "", "tier": 0, "user_count": 0}
-            if handle['tier'] > solved_problems_user[problem['problemId']]["tier"]:
-                solved_problems_user[problem['problemId']]["handle"] = handle["handle"]
-                solved_problems_user[problem['problemId']]["tier"] = handle["tier"]
+                solved_problems_user[problem['problemId']] = {"handle": [], "tier": [], "user_count": 0}
+            solved_problems_user[problem['problemId']]["handle"].append(user_data["handle"])
+            solved_problems_user[problem['problemId']]["tier"].append(user_data["tier"])
             solved_problems_user[problem['problemId']]['user_count'] += 1
+
+    # get tier average
+    for key, value in solved_problems_user.items():
+        solved_problems_user[key]["tier_avg"] = int(sum(value["tier"]) / len(value["tier"]))
 
     return solved_problems_user
 
