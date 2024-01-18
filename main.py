@@ -133,8 +133,8 @@ async def get_problem_tag(tag_id: int = None) -> dict[str, list]:
 @app.get("/problem")
 async def get_problem_list(problem_id: int = None):
     with open("problem_info.json", "r") as f:
-        problem_list = json.load(f)
+        problem_dict = json.load(f)
     if problem_id:
-        return {"problem_list": problem_list.get(str(problem_id), None)}
+        return {"problem_dict": problem_dict.get(str(problem_id), None)}
     else:
-        return {"problem_list": problem_list}
+        return {"problem_dict": problem_dict}
