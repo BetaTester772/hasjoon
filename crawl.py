@@ -263,7 +263,7 @@ def get_solved_problem_info(name="하나고등학교"):
 
     user_data = get_user_data(get_user_handle_list(get_organization_id(name)))
 
-    for handle in user_data
+    for handle in user_data:
         problems = get_user_solved_problem_list(handle)
 
         for problem in problems:
