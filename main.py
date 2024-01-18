@@ -131,7 +131,7 @@ async def get_problem_tag(tag_id: int = None) -> dict[str, list]:
 
 
 @app.get("/problem")
-async def get_problem_list(problem_id: int = None) -> dict[str, dict[int | str, list | int]]:
+async def get_problem_list(problem_id: int = None) -> dict[str, list]:
     with open("problem_info.json", "r") as f:
         problem_list = json.load(f)
     if problem_id:
