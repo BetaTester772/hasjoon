@@ -203,7 +203,7 @@ def main() -> tuple[pd.DataFrame, dict]:
     df.to_csv(f'problem_count_by_tag.csv', index=False)
 
     with open("problem_info.json", 'w') as f:
-        json.dump(problem_info, f, ensure_ascii=False, indent=4)
+        json.dump(problem_info, f, ensure_ascii=False, indent=3)
 
     with open('updated_at.txt', 'w') as f:
         f.write(updated_at.strftime("%Y-%m-%d %H:%M:%S"))

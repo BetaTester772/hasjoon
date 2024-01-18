@@ -7,6 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import logging
 from datetime import datetime, timedelta
 from fastapi.responses import RedirectResponse
+import json
 
 app = FastAPI()
 
@@ -126,3 +127,13 @@ async def get_problem_tag(tag_id: int = None) -> dict[str, list]:
         return {"problem_list": problem_by_tag[problem_by_tag['tag_id'] == tag_id].to_dict(orient="records")}
     else:
         return {"problem_tag": problem_by_tag.to_dict(orient="records")}
+
+
+@app.get("/problem")
+async def get_problem_list(problem_id: int = None) -> dict[str, dict[str, list | int]]:
+    with open("problem_info.json", "r") as f:
+        problem_list = json.load(f)
+    if problem_id:
+        return {"problem_list": problem_list.get(str(problem_id), None)}
+    else:
+        return {"problem_list": problem_list}
