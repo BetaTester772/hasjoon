@@ -151,11 +151,16 @@ async def get_vs_high_school(hs_name: str):
     rival_high_school = high_school_data[high_school_data['name'] == hs_name].to_dict(orient="records")[0]
     my_high_school = high_school_data[high_school_data['name'] == "하나고등학교"].to_dict(orient="records")[0]
 
+    rating_diff = my_high_school['rating'] - rival_high_school['rating']
+    user_count_diff = my_high_school['user_count'] - rival_high_school['user_count']
+    solved_count_diff = my_high_school['solved_count'] - rival_high_school['solved_count']
+    rank_diff = rival_high_school['rank'] - my_high_school['rank']
+
     diff = {
-            "rating"     : str(my_high_school['rating'] - rival_high_school['rating']),
-            "userCount"  : str(my_high_school['user_count'] - rival_high_school['user_count']),
-            "solvedCount": str(my_high_school['solved_count'] - rival_high_school['solved_count']),
-            "rank"       : str(rival_high_school['rank'] - my_high_school['rank']),
+            "rating"      : str(rating_diff) if rating_diff > 0 else "+" + str(rating_diff),
+            "user_count"  : str(user_count_diff) if user_count_diff > 0 else "+" + str(user_count_diff),
+            "solved_count": str(solved_count_diff) if solved_count_diff > 0 else "+" + str(solved_count_diff),
+            "rank"        : str(rank_diff) if rank_diff > 0 else "+" + str(rank_diff),
     }
 
     return {"opponent": rival_high_school, "us": my_high_school, "diff": diff}
