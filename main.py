@@ -152,10 +152,10 @@ async def get_vs_high_school(hs_name: str):
     my_high_school = high_school_data[high_school_data['name'] == "하나고등학교"].to_dict(orient="records")[0]
 
     diff = {
-            "rating"     : my_high_school['rating'] - rival_high_school['rating'],
-            "userCount"  : my_high_school['user_count'] - rival_high_school['user_count'],
-            "solvedCount": my_high_school['solved_count'] - rival_high_school['solved_count'],
-            "rank"       : my_high_school['rank'] - rival_high_school['rank'],
+            "rating"     : str(my_high_school['rating'] - rival_high_school['rating']),
+            "userCount"  : str(my_high_school['user_count'] - rival_high_school['user_count']),
+            "solvedCount": str(my_high_school['solved_count'] - rival_high_school['solved_count']),
+            "rank"       : str(rival_high_school['rank'] - my_high_school['rank']),
     }
 
     return {"opponent": rival_high_school, "us": my_high_school, "diff": diff}
