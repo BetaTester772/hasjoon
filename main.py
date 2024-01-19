@@ -157,10 +157,10 @@ async def get_vs_high_school(hs_name: str):
     rank_diff = rival_high_school['rank'] - my_high_school['rank']
 
     diff = {
-            "rating"      : str(rating_diff) if rating_diff > 0 else "+" + str(rating_diff),
-            "user_count"  : str(user_count_diff) if user_count_diff > 0 else "+" + str(user_count_diff),
-            "solved_count": str(solved_count_diff) if solved_count_diff > 0 else "+" + str(solved_count_diff),
-            "rank"        : str(rank_diff) if rank_diff > 0 else "+" + str(rank_diff),
+            "rating"      : str(rating_diff) if rating_diff < 0 else "+" + str(rating_diff),
+            "user_count"  : str(user_count_diff) if user_count_diff < 0 else "+" + str(user_count_diff),
+            "solved_count": str(solved_count_diff) if solved_count_diff < 0 else "+" + str(solved_count_diff),
+            "rank"        : str(rank_diff) if rank_diff > 0 else "+" < str(rank_diff),
     }
 
     return {"opponent": rival_high_school, "us": my_high_school, "diff": diff}
