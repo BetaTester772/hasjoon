@@ -35,7 +35,7 @@ def get_organization_id(name: str) -> int:
         response = requests.get(url, headers=headers, params=querystring)
         if response.status_code == 200 and name in response.text:
             break
-        if len(response.json()['itmes']) == 0:
+        if response.status_code != 200 or len(response.json()['items']) == 0:
             break
         i += 1
 
@@ -53,7 +53,7 @@ def get_all_high_school_data():
         querystring = {"page": str(i)}
 
         response = requests.get(url, headers=headers, params=querystring)
-        if len(response.json()['itmes']) == 0:
+        if response.status_code != 200 or len(response.json()['items']) == 0:
             break
         i += 1
 
