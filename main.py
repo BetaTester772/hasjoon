@@ -1,5 +1,5 @@
 import os
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 import crawl
 from fastapi_utilities import repeat_at
 import pandas as pd
@@ -148,8 +148,15 @@ async def get_problem_list(problem_id: int = None):
 @app.get("/vs/high_school")
 async def get_vs_high_school(hs_name: str):
     high_school_data = pd.read_csv("high_school_data.csv")
-    rival_high_school = high_school_data[high_school_data['name'] == hs_name].to_dict(orient="records")[0]
-    my_high_school = high_school_data[high_school_data['name'] == "하나고등학교"].to_dict(orient="records")[0]
+
+    rival_high_school_df = high_school_data[high_school_data['name'] == hs_name]
+    my_high_school_df = high_school_data[high_school_data['name'] == "하나고등학교"]
+
+    if not (rival_high_school_df.empty or my_high_school_df.empty):
+        raise HTTPException(status_code=404, detail=f"{hs_name} Not Found")
+
+    rival_high_school = rival_high_school_df.to_dict(orient="records")[0]
+    my_high_school = my_high_school_df.to_dict(orient="records")[0]
 
     rating_diff = my_high_school['rating'] - rival_high_school['rating']
     user_count_diff = my_high_school['user_count'] - rival_high_school['user_count']
@@ -157,10 +164,10 @@ async def get_vs_high_school(hs_name: str):
     rank_diff = rival_high_school['rank'] - my_high_school['rank']
 
     diff = {
-            "rating"      : str(rating_diff) if rating_diff < 0 else "+" + str(rating_diff),
-            "user_count"  : str(user_count_diff) if user_count_diff < 0 else "+" + str(user_count_diff),
-            "solved_count": str(solved_count_diff) if solved_count_diff < 0 else "+" + str(solved_count_diff),
-            "rank"        : str(rank_diff) if rank_diff < 0 else "+" + str(rank_diff),
+            "rating"      : rating_diff,
+            "user_count"  : user_count_diff,
+            "solved_count": solved_count_diff,
+            "rank"        : rank_diff,
     }
 
     return {"opponent": rival_high_school, "us": my_high_school, "diff": diff}
