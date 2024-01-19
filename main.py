@@ -153,8 +153,8 @@ async def get_vs_high_school(hs_name: str):
 
     diff = {
             "rating"     : my_high_school['rating'] - rival_high_school['rating'],
-            "userCount"  : my_high_school['userCount'] - rival_high_school['userCount'],
-            "solvedCount": my_high_school['solvedCount'] - rival_high_school['solvedCount'],
+            "userCount"  : my_high_school['userCount'] - rival_high_school['user_count'],
+            "solvedCount": my_high_school['solvedCount'] - rival_high_school['solved_count'],
             "rank"       : my_high_school['rank'] - rival_high_school['rank'],
     }
 
