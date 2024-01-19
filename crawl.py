@@ -415,6 +415,6 @@ def get_solvedac_problem_level_count():
 
 
 if __name__ == '__main__':
-    print(get_all_high_school_data())
-    # main()
+    # print(get_all_high_school_data())
+    main()
     # print(get_solved_problem_info())
