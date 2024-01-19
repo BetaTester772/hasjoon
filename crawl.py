@@ -14,7 +14,9 @@ def get_user_handle_list(organization_id: int = 804) -> list:
 
     while True:
         response = requests.get(f'https://www.acmicpc.net/school/ranklist/{organization_id}/{i}',
-                                headers={'User-Agent': 'Mozilla/5.0'})
+                                # TODO: find another way not to crawl baekjoon
+                                headers={'User-Agent':
+                                             "Mozilla/5.0 (Windows NT 10.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.75 Safari/537.36"})
 
         if response.status_code != 200:
             break
@@ -93,14 +95,14 @@ def get_organization_info(name: str = "하나고등학교") -> dict:
 
 
 def get_user_info(handle: str) -> dict | None:
-    url1 = f"https://www.acmicpc.net/user/{handle}"
-
-    html = bs.BeautifulSoup(requests.get(url1, headers={'User-Agent': 'Mozilla/5.0'}).text, 'html.parser')
-
-    rank_element = html.find('th', string='등수')
-
-    # 등수 요소에서 등수를 추출합니다.
-    rank = rank_element .find_next('td').text.strip()
+    # url1 = f"https://www.acmicpc.net/user/{handle}" TODO: are you sure to crawl baekjoon?
+    #
+    # html = bs.BeautifulSoup(requests.get(url1, headers={'User-Agent': 'Mozilla/5.0'}).text, 'html.parser')
+    #
+    # rank_element = html.find('th', string='등수')
+    #
+    # # 등수 요소에서 등수를 추출합니다.
+    # rank = rank_element .find_next('td').text.strip()
 
     url2 = "https://solved.ac/api/v3/user/show"
 
@@ -122,7 +124,7 @@ def get_user_info(handle: str) -> dict | None:
                 'coins'           : None,
                 'stardusts'       : None,
                 'solved_rank_all' : None,
-                'boj_rank_all'    : rank,
+                # 'boj_rank_all'    : rank, TODO: are you sure to crawl baekjoon?
         }
 
     res_dict = response.json()
@@ -137,13 +139,14 @@ def get_user_info(handle: str) -> dict | None:
             'coins'           : res_dict['coins'],
             'stardusts'       : res_dict['stardusts'],
             'solved_rank_all' : res_dict['rank'],
-            'boj_rank_all'    : rank,
+            # 'boj_rank_all'    : rank, TODO: are you sure to crawl baekjoon?
     }
 
 
 def get_user_data(handle_list: list):
     df = pd.DataFrame(columns=['handle', 'solved_count', 'vote_count', 'class', 'class_decoration', 'tier', 'rating',
-                               'coins', 'stardusts', 'solved_rank', 'boj_rank', 'solved_rank_all', 'boj_rank_all'])
+                               'coins', 'stardusts', 'solved_rank', 'boj_rank', 'solved_rank_all'])  # 'boj_rank_all'])
+                                                                                                    # TODO: are you sure to crawl baekjoon?
 
     for i, handle in enumerate(handle_list):
         user_dict = get_user_info(handle)
