@@ -47,16 +47,6 @@ def get_organization_id(name: str) -> int:
 def get_all_high_school_data():
     url = "https://solved.ac/api/v3/ranking/organization"
 
-    headers = {"Accept": "application/json"}
-    i = 1
-    while True:
-        querystring = {"page": str(i)}
-
-        response = requests.get(url, headers=headers, params=querystring)
-        if response.status_code != 200 or len(response.json()['items']) == 0:
-            break
-        i += 1
-
     hs_dict = {
             "organization_id": [],  # 439
             "name"           : [],  # "경기과학고등학교"
@@ -70,17 +60,28 @@ def get_all_high_school_data():
             "global_rank"    : [],  # 2
     }
 
-    for i in response.json()['items']:
-        hs_dict['organization_id'].append(i['organizationId'])
-        hs_dict['name'].append(i['name'])
-        hs_dict['type'].append(i['type'])
-        hs_dict['rating'].append(i['rating'])
-        hs_dict['user_count'].append(i['userCount'])
-        hs_dict['vote_count'].append(i['voteCount'])
-        hs_dict['solved_count'].append(i['solvedCount'])
-        hs_dict['color'].append(i['color'])
-        hs_dict['rank'].append(i['rank'])
-        hs_dict['global_rank'].append(i['globalRank'])
+    headers = {"Accept": "application/json"}
+    i = 1
+    while True:
+        querystring = {"page": str(i), "type": "high_school"}
+
+        response = requests.get(url, headers=headers, params=querystring)
+        if response.status_code != 200 or len(response.json()['items']) == 0:
+            break
+
+        for item in response.json()['items']:
+            hs_dict['organization_id'].append(item['organizationId'])
+            hs_dict['name'].append(item['name'])
+            hs_dict['type'].append(item['type'])
+            hs_dict['rating'].append(item['rating'])
+            hs_dict['user_count'].append(item['userCount'])
+            hs_dict['vote_count'].append(item['voteCount'])
+            hs_dict['solved_count'].append(item['solvedCount'])
+            hs_dict['color'].append(item['color'])
+            hs_dict['rank'].append(item['rank'])
+            hs_dict['global_rank'].append(item['globalRank'])
+
+        i += 1
 
     return pd.DataFrame(hs_dict, columns=['organization_id', 'name', 'type', 'rating', 'user_count', 'vote_count',
                                           'solved_count', 'color', 'rank', 'global_rank'])
@@ -414,6 +415,6 @@ def get_solvedac_problem_level_count():
 
 
 if __name__ == '__main__':
-    # print(get_organiztion_user_data())
-    main()
+    print(get_all_high_school_data())
+    # main()
     # print(get_solved_problem_info())
