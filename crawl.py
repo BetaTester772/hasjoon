@@ -10,27 +10,16 @@ from datetime import datetime, timedelta
 
 def get_user_handle_list(organization_id: int = 804) -> list:
     handle_list = []
-    i = 1
 
-    while True:
-        response = requests.get(f'https://www.acmicpc.net/school/ranklist/{organization_id}/{i}',
-                                # TODO: find another way not to crawl baekjoon
-                                headers={'User-Agent':
-                                             "Mozilla/5.0 (Windows NT 10.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.75 Safari/537.36"})
+    url = f"https://solved.ac/api/v3/ranking/in_organization?page=1&organizationId={organization_id}"
 
-        if response.status_code != 200:
-            break
+    headers = {"Accept": "application/json"}
 
-        html = bs.BeautifulSoup(response.text, 'html.parser')
+    response = requests.get(url, headers=headers)
 
-        # 테이블에서 모든 행을 찾아냅니다.
-        table = html.find('table')
-
-        # DataFrame을 직접 생성
-        df = pd.read_html(StringIO(str(table)), header=0)[0]  # StringIO로 감싸 문자열을 전달합니다.
-
-        handle_list.extend(df['아이디'].tolist())
-        i += 1
+    if response.status_code == 200:
+        for i in response.json()['items']:
+            handle_list.append(i['handle'])
 
     return handle_list
 
@@ -143,14 +132,47 @@ def get_user_info(handle: str) -> dict | None:
     }
 
 
-def get_user_data(handle_list: list):
-    df = pd.DataFrame(columns=['handle', 'solved_count', 'vote_count', 'class', 'class_decoration', 'tier', 'rating',
-                               'coins', 'stardusts', 'solved_rank', 'boj_rank', 'solved_rank_all'])  # 'boj_rank_all'])
-                                                                                                    # TODO: are you sure to crawl baekjoon?
+def get_organiztion_user_data(organization_id: int = 804) -> pd.DataFrame:
+    url = f"https://solved.ac/api/v3/ranking/in_organization?page=1&organizationId={organization_id}"
 
-    for i, handle in enumerate(handle_list):
-        user_dict = get_user_info(handle)
-        df = pd.concat([df, pd.DataFrame(user_dict, index=[i])])
+    headers = {"Accept": "application/json"}
+
+    response = requests.get(url, headers=headers)
+
+    user_dict = {
+            'handle'          : [],
+            'solved_count'    : [],
+            'vote_count'      : [],
+            'class'           : [],
+            'class_decoration': [],
+            'tier'            : [],
+            'rating'          : [],
+            'coins'           : [],
+            'stardusts'       : [],
+            'solved_rank_all' : [],
+    }
+
+    if response.status_code == 200:
+        for i in response.json()['items']:
+            user_dict['handle'].append(i['handle'])
+            user_dict['solved_count'].append(i['solvedCount'])
+            user_dict['vote_count'].append(i['voteCount'])
+            user_dict['class'].append(i['class'])
+            user_dict['class_decoration'].append(i['classDecoration'])
+            user_dict['tier'].append(i['tier'])
+            user_dict['rating'].append(i['rating'])
+            user_dict['coins'].append(i['coins'])
+            user_dict['stardusts'].append(i['stardusts'])
+            user_dict['solved_rank_all'].append(i['rank'])
+    else:
+        return pd.DataFrame(user_dict,
+                            columns=['handle', 'solved_count', 'vote_count', 'class', 'class_decoration', 'tier',
+                                     'rating', 'coins', 'stardusts', 'solved_rank_all'])  # 'boj_rank_all'])
+
+    df = pd.DataFrame(user_dict, columns=['handle', 'solved_count', 'vote_count', 'class', 'class_decoration', 'tier',
+                                          'rating', 'coins', 'stardusts', 'solved_rank', 'boj_rank',
+                                          'solved_rank_all'])  # 'boj_rank_all'])
+    # TODO: are you sure to crawl baekjoon?
 
     # add boj rank
     df['boj_rank'] = df.index + 1
@@ -171,7 +193,7 @@ def get_user_data(handle_list: list):
 def main() -> tuple[pd.DataFrame, dict]:
     updated_at: datetime = datetime.now()
 
-    user_data = get_user_data(get_user_handle_list(get_organization_id("하나고등학교")))
+    user_data = get_organiztion_user_data()
     # print(user_data)
 
     organization_data = get_organization_info("하나고등학교")
@@ -271,9 +293,9 @@ def get_organization_solved_problems_by_level_and_tag(name: str = "하나고등�
 def get_solved_problem_info(name="하나고등학교"):
     solved_problems_user: dict[int, dict[str, int | str]] = {}
 
-    for handle in get_user_handle_list(get_organization_id(name)):
+    for i, handle in enumerate(get_user_handle_list(get_organization_id(name))):
         problems = get_user_solved_problem_list(handle)
-        user_data = get_user_data([handle]).to_dict(orient="records")[0]
+        user_data = get_organiztion_user_data().to_dict(orient="records")[i]
 
         for problem in problems:
             # print(problem)
@@ -344,5 +366,6 @@ def get_solvedac_problem_level_count():
 
 
 if __name__ == '__main__':
+    # print(get_organiztion_user_data())
     main()
     # print(get_solved_problem_info())
