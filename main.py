@@ -39,6 +39,7 @@ try:
     open("problem_count_by_level.csv", 'r')
     open("problem_count_by_tag.csv", 'r')
     open("problem_info.json", 'r')
+    open("high_school_data.csv", 'r')
 except FileNotFoundError:
     crawl.main()
     while True:
@@ -79,6 +80,7 @@ def sync():
     organization_data = pd.read_csv("organization_data.csv")
     problem_by_level = pd.read_csv("problem_count_by_level.csv")
     problem_by_tag = pd.read_csv("problem_count_by_tag.csv")
+    high_school_data = pd.read_csv("high_school_data.csv")
 
     os.makedirs("./history", exist_ok=True)
 
@@ -92,6 +94,9 @@ def sync():
             index=False)
     problem_by_tag.to_csv(
             f'./history/problem_count_by_tag_{(datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")}.csv',
+            index=False)
+    high_school_data.to_csv(
+            f'./history/high_school_data_{(datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")}.csv',
             index=False)
 
 
@@ -138,3 +143,19 @@ async def get_problem_list(problem_id: int = None):
         return {"problem_dict": problem_dict.get(str(problem_id), None)}
     else:
         return {"problem_dict": problem_dict}
+
+
+@app.get("/vs/high_school")
+async def get_vs_high_school(hs_name: str):
+    high_school_data = pd.read_csv("high_school_data.csv")
+    rival_high_school = high_school_data[high_school_data['name'] == hs_name].to_dict(orient="records")[0]
+    my_high_school = high_school_data[high_school_data['name'] == "하나고등학교"].to_dict(orient="records")[0]
+
+    diff = {
+            "rating"     : my_high_school['rating'] - rival_high_school['rating'],
+            "userCount"  : my_high_school['userCount'] - rival_high_school['userCount'],
+            "solvedCount": my_high_school['solvedCount'] - rival_high_school['solvedCount'],
+            "rank"       : my_high_school['rank'] - rival_high_school['rank'],
+    }
+
+    return {"opponent": rival_high_school, "us": my_high_school, "diff": diff}

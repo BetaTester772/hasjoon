@@ -35,11 +35,55 @@ def get_organization_id(name: str) -> int:
         response = requests.get(url, headers=headers, params=querystring)
         if response.status_code == 200 and name in response.text:
             break
+        if len(response.json()['itmes']) == 0:
+            break
         i += 1
 
     for i in response.json()['items']:
         if i['name'] == name:
             return i['organizationId']
+
+
+def get_all_high_school_data():
+    url = "https://solved.ac/api/v3/ranking/organization"
+
+    headers = {"Accept": "application/json"}
+    i = 1
+    while True:
+        querystring = {"page": str(i)}
+
+        response = requests.get(url, headers=headers, params=querystring)
+        if len(response.json()['itmes']) == 0:
+            break
+        i += 1
+
+    hs_dict = {
+            "organization_id": [],  # 439
+            "name"           : [],  # "경기과학고등학교"
+            "type"           : [],  # "high_school"
+            "rating"         : [],  # 3327
+            "user_count"     : [],  # 220
+            "vote_count"     : [],  # 32325
+            "solved_count"   : [],  # 17983
+            "color"          : [],  # "#000000"
+            "rank"           : [],  # 1
+            "global_rank"    : [],  # 2
+    }
+
+    for i in response.json()['items']:
+        hs_dict['organization_id'].append(i['organizationId'])
+        hs_dict['name'].append(i['name'])
+        hs_dict['type'].append(i['type'])
+        hs_dict['rating'].append(i['rating'])
+        hs_dict['user_count'].append(i['userCount'])
+        hs_dict['vote_count'].append(i['voteCount'])
+        hs_dict['solved_count'].append(i['solvedCount'])
+        hs_dict['color'].append(i['color'])
+        hs_dict['rank'].append(i['rank'])
+        hs_dict['global_rank'].append(i['globalRank'])
+
+    return pd.DataFrame(hs_dict, columns=['organization_id', 'name', 'type', 'rating', 'user_count', 'vote_count',
+                                          'solved_count', 'color', 'rank', 'global_rank'])
 
 
 def get_organization_info(name: str = "하나고등학교") -> dict:
@@ -206,6 +250,8 @@ def main() -> tuple[pd.DataFrame, dict]:
     problem_info = get_solved_problem_info()
     # print(problem_info)
 
+    high_school_data = get_all_high_school_data()
+
     user_data.to_csv(f'user_data.csv', index=False)
     pd.DataFrame(organization_data, index=[0]).to_csv(f'organization_data.csv', index=False)
     level_problem_count = get_solvedac_problem_level_count()
@@ -229,6 +275,8 @@ def main() -> tuple[pd.DataFrame, dict]:
 
     with open("problem_info.json", 'w') as f:
         json.dump(problem_info, f, ensure_ascii=False, indent=4)
+
+    high_school_data.to_csv(f'high_school_data.csv', index=False)
 
     with open('updated_at.txt', 'w') as f:
         f.write(updated_at.strftime("%Y-%m-%d %H:%M:%S"))
