@@ -152,7 +152,7 @@ async def get_vs_high_school(hs_name: str):
     rival_high_school_df = high_school_data[high_school_data['name'] == hs_name]
     my_high_school_df = high_school_data[high_school_data['name'] == "하나고등학교"]
 
-    if not (rival_high_school_df.empty or my_high_school_df.empty):
+    if rival_high_school_df.empty or my_high_school_df.empty:
         raise HTTPException(status_code=404, detail=f"{hs_name} Not Found")
 
     rival_high_school = rival_high_school_df.to_dict(orient="records")[0]
