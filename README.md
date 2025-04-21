@@ -6,6 +6,6 @@
 
 ![image](https://github.com/user-attachments/assets/229eadaa-13de-4fda-956e-b200b146ca0d)
 
-## go to frontend
+## go to frontend repo
 
 [click here](https://github.com/BetaTester772/hasjoon-svelte)
